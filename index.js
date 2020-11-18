@@ -10,6 +10,9 @@ const circleSize = 300;
 const thickness = 5;
 const thumbCircleSize = 50;
 
+let angle = -89;
+let speed = 0.2;
+
 window.addEventListener("load", () => {
   canvas.width = 900;
   canvas.height = 900;
@@ -58,8 +61,24 @@ function drawThumb(theta) {
   ctx.fillStyle = "white";
   ctx.fill();
 }
+function drawHangingPath(angle) {
+  ctx.beginPath();
+  ctx.arc(
+    width / 2,
+    height / 2,
+    circleSize,
+    degree2Radian(-90),
+    degree2Radian(angle)
+  );
+  ctx.strokeStyle = "black";
+  ctx.lineCap = "round";
+  ctx.stroke();
+}
 
 function drawHangingThumb(currentX, currentY) {
+  ctx.clearRect(0, 0, width, height);
+  drawDashedLine();
+  drawStartPoint();
   ctx.beginPath();
   ctx.arc(
     width / 2 + currentX,
@@ -68,24 +87,29 @@ function drawHangingThumb(currentX, currentY) {
     0,
     2 * Math.PI
   );
+  ctx.fillStyle = "white";
   ctx.fill();
   ctx.stroke();
 }
-function hangingthumb() {
-  ctx.clearRect(0, 0, width, height);
-  drawDashedLine();
-  drawStartPoint();
 
-  for (let i = -90; i < -60; i++) {
-    //90도 이하일 때 1도씩 증가시킨다
-    const currentX = Math.cos(degree2Radian(i)) * circleSize;
-    const currentY = Math.sin(degree2Radian(i)) * circleSize;
-    drawHangingThumb(currentX, currentY);
+function hangingthumb() {
+  const currentX = Math.cos(degree2Radian(angle)) * circleSize;
+  const currentY = Math.sin(degree2Radian(angle)) * circleSize;
+
+  drawHangingThumb(currentX, currentY);
+  drawHangingPath(angle);
+
+  angle += speed;
+
+  if (angle > -50) {
+    speed = -speed;
+  }
+  if (angle < -90) {
+    speed = -speed;
   }
 }
 
 function dragedHandler() {
-  //마우스 클릭 전 과 클릭 후 로 나누기
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawDashedLine();
   drawStartPoint();
@@ -95,8 +119,6 @@ function dragedHandler() {
   const theta = Math.atan2(mouseClickedY - centerY, mouseClickedX - centerX);
 
   for (let i = 0; i < 60; i += step) {
-    // const x = Math.cos(degree2Radian(i)) * circleSize;
-    // const y = Math.sin(degree2Radian(i)) * circleSize;
     drawPath(theta);
     drawThumb(theta);
   }
