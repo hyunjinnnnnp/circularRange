@@ -1,23 +1,23 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const degree2Radian = (degrees) => degrees * (Math.PI / 180);
-let timeId;
-let offset = 0;
 
-let width, height, mouseClickedX, mouseClickedY, centerX, centerY;
+let width, height, mouseClickedX, mouseClickedY, centerX, centerY, timeId;
 let mousePressed = false;
 
 const circleSize = 300;
+let bgCircleSize = circleSize + 80;
 const thickness = 5;
 const thumbCircleSize = 60;
-
+ctx.lineCap = "round";
+let offset = 0; //행군 개미 효과
 let angle = -86;
 let speed = 0.2;
+let grow = speed;
 
 const gray = "#FFFFFF",
   black = "#282828",
   red = "#CC2634";
-ctx.lineCap = "round";
 
 window.addEventListener("load", () => {
   canvas.width = 900;
@@ -72,12 +72,20 @@ function drawPath(theta) {
 }
 
 function drawThumb(theta) {
-  const x = Math.cos(theta) * circleSize;
-  const y = Math.sin(theta) * circleSize;
+  const currentX = Math.cos(theta) * circleSize;
+  const currentY = Math.sin(theta) * circleSize;
   ctx.beginPath();
-  ctx.arc(width / 2 + x, height / 2 + y, thumbCircleSize, 0, 2 * Math.PI);
+  ctx.arc(
+    width / 2 + currentX,
+    height / 2 + currentY,
+    thumbCircleSize,
+    0,
+    2 * Math.PI
+  );
   ctx.fillStyle = `${gray}`;
   ctx.fill();
+  let angle = (theta * 180) / Math.PI;
+  drawArrows(angle, currentX, currentY);
 }
 function drawHangingPath(angle) {
   ctx.beginPath();
@@ -92,25 +100,7 @@ function drawHangingPath(angle) {
   ctx.lineWidth = 5;
   ctx.stroke();
 }
-
-function drawHangingThumb(currentX, currentY) {
-  ctx.clearRect(0, 0, width, height);
-  marchDashedLine();
-  drawStartPoint();
-  drawHangingPath(angle);
-
-  ctx.beginPath();
-  ctx.arc(
-    width / 2 + currentX,
-    height / 2 + currentY,
-    thumbCircleSize,
-    0,
-    2 * Math.PI
-  );
-
-  ctx.fillStyle = `${gray}`;
-  ctx.fill();
-
+function drawArrows(angle, currentX, currentY) {
   //Draw Arrows rotate
   let circleCenterX = width / 2 + currentX,
     circleCenterY = height / 2 + currentY;
@@ -133,12 +123,60 @@ function drawHangingThumb(currentX, currentY) {
   ctx.fill();
   ctx.restore();
 }
+function drawHangingThumb(currentX, currentY) {
+  ctx.clearRect(0, 0, width, height);
+  drawHangingBgCircle(angle);
+  marchDashedLine();
+  drawStartPoint();
+  drawHangingPath(angle);
+
+  ctx.beginPath();
+  ctx.arc(
+    width / 2 + currentX,
+    height / 2 + currentY,
+    thumbCircleSize,
+    0,
+    2 * Math.PI
+  );
+
+  ctx.fillStyle = `${gray}`;
+  ctx.fill();
+}
+function drawDraggedBgCircle(e, clickedX, clickedY) {
+  ctx.clearRect(0, 0, width, height);
+  ctx.beginPath();
+  ctx.fillStyle = `${black}`;
+  ctx.arc(width / 2, height / 2, bgCircleSize, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // if (e.clientX > width / 2 && e.clientY > height / 2) {
+  //   //위 오른쪽
+  //   if (clickedX > e.clientX || clickedY < e.clientY) {
+  //     bgCircleSize += 0.2;
+  //   }
+  // }
+}
+function drawHangingBgCircle(angle) {
+  ctx.clearRect(0, 0, width, height);
+  ctx.beginPath();
+  ctx.fillStyle = `${black}`;
+  ctx.arc(width / 2, height / 2, bgCircleSize, 0, 2 * Math.PI);
+  ctx.fill();
+
+  bgCircleSize += grow;
+  if (angle > -50) {
+    grow = -grow;
+  } else if (angle < -86) {
+    grow = -grow;
+  }
+}
 
 function hangingthumb() {
   const currentX = Math.cos(degree2Radian(angle)) * circleSize;
   const currentY = Math.sin(degree2Radian(angle)) * circleSize;
 
   drawHangingThumb(currentX, currentY);
+  drawArrows(angle, currentX, currentY);
 
   angle += speed;
   if (angle > -50) {
@@ -148,22 +186,17 @@ function hangingthumb() {
   }
 }
 
-function dragedHandler() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  marchDashedLine();
-  drawStartPoint();
-  const step = 360 / 10;
-
+function dragedHandler(e) {
   // (원 기준으로 마우스가 있는 곳) 각도를 계산
   const theta = Math.atan2(mouseClickedY - centerY, mouseClickedX - centerX);
+  const angle = theta * (180 / Math.PI);
 
-  for (let i = 0; i < 60; i += step) {
-    drawPath(theta);
-    drawThumb(theta);
-  }
-
-  window.requestAnimationFrame(dragedHandler);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawDraggedBgCircle(e);
+  marchDashedLine();
+  drawStartPoint();
+  drawPath(theta);
+  drawThumb(theta);
 }
 
 document.addEventListener("mousedown", (e) => {
