@@ -12,4 +12,5 @@ canvas {
   width: 90vh;
   height: 90vh;
   border: 1px solid black;
+  background-color: rgb(161, 13, 13);
 }
