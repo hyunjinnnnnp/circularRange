@@ -107,8 +107,31 @@ function drawHangingThumb(currentX, currentY) {
     0,
     2 * Math.PI
   );
+
   ctx.fillStyle = `${gray}`;
   ctx.fill();
+
+  //Draw Arrows rotate
+  let circleCenterX = width / 2 + currentX,
+    circleCenterY = height / 2 + currentY;
+
+  ctx.save();
+  ctx.translate(circleCenterX, circleCenterY);
+  ctx.rotate((angle * Math.PI) / 180);
+
+  ctx.beginPath();
+  ctx.moveTo(0, 30);
+  ctx.lineTo(-6, 24);
+  ctx.lineTo(6, 24);
+  ctx.lineTo(0, 30);
+
+  ctx.moveTo(0, -30);
+  ctx.lineTo(-6, -24);
+  ctx.lineTo(6, -24);
+  ctx.lineTo(0, -30);
+  ctx.fillStyle = `${black}`;
+  ctx.fill();
+  ctx.restore();
 }
 
 function hangingthumb() {
@@ -127,6 +150,7 @@ function hangingthumb() {
 
 function dragedHandler() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   marchDashedLine();
   drawStartPoint();
   const step = 360 / 10;
