@@ -49,7 +49,17 @@ function marchDashedLine() {
   if (offset > 16) {
     offset = 0;
   }
+
   drawDashedLine();
+  ctx.font = "bold 50px sans-serif";
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+  ctx.fillText(`Ouvrons les`, canvas.width / 2, canvas.height / 2 - 120);
+  ctx.fillText(`portes de l'emploi`, canvas.width / 2, canvas.height / 2 - 70);
+  ctx.fillText(`aux personnes`, canvas.width / 2, canvas.height / 2 - 20);
+  ctx.fillText(`immigrantes.`, canvas.width / 2, canvas.height / 2 + 30);
+  ctx.font = "bold 22px sans-serif";
+  ctx.fillText(`Tournez la poignée`, canvas.width / 2, canvas.height / 2 + 140);
 }
 
 function drawStartPoint() {
@@ -125,7 +135,7 @@ function drawArrows(angle, currentX, currentY) {
 }
 function drawHangingThumb(currentX, currentY) {
   ctx.clearRect(0, 0, width, height);
-  drawHangingBgCircle(angle);
+  growCircle(angle);
   marchDashedLine();
   drawStartPoint();
   drawHangingPath(angle);
@@ -142,57 +152,109 @@ function drawHangingThumb(currentX, currentY) {
   ctx.fillStyle = `${gray}`;
   ctx.fill();
 }
-function drawDraggedBgCircle(e, clickedX, clickedY) {
+////-------------------------------드래그했을 때 원의 크기
+function growCircleDrag(clickedX, clickedY, draggedX, draggedY) {
   ctx.clearRect(0, 0, width, height);
   ctx.beginPath();
   ctx.fillStyle = `${black}`;
   ctx.arc(width / 2, height / 2, bgCircleSize, 0, 2 * Math.PI);
   ctx.fill();
 
-  // if (e.clientX > width / 2 && e.clientY > height / 2) {
-  //   //위 오른쪽
-  //   if (clickedX > e.clientX || clickedY < e.clientY) {
-  //     bgCircleSize += 0.2;
-  //   }
-  // }
+  const widthCenter = canvas.offsetWidth / 2;
+  const heightCenter = canvas.offsetHeight / 2;
+  let dist;
+  //시작점 위치에 닿으면 서클크기 고정시키기
+  //마우스 위치의 각도를 받아서 각도가 커진만큼 원을 ++ 시킨다 로 바꾸기!!
+
+  if (draggedY < heightCenter && draggedX > widthCenter) {
+    if (draggedX > clickedX) {
+      dist = draggedX - clickedX;
+      bgCircleSize += dist / 500;
+    } else if (draggedX <= clickedX) {
+      dist = clickedX - draggedX;
+      bgCircleSize -= dist / 500;
+    }
+  } else if (draggedY > heightCenter && draggedX > widthCenter) {
+    if (draggedX < clickedX) {
+      dist = clickedX - draggedX;
+      bgCircleSize += dist / 500;
+    } else if (draggedX > clickedX) {
+      dist = draggedX - clickedX;
+      bgCircleSize -= dist / 500;
+    }
+  } else if (draggedY > heightCenter && draggedX < widthCenter) {
+    if (draggedX < clickedX) {
+      dist = clickedX - draggedX;
+      bgCircleSize += dist / 500;
+    } else if (draggedX > clickedX) {
+      dist = draggedX - clickedX;
+      bgCircleSize -= dist / 500;
+    }
+  } else if (draggedY < heightCenter && draggedX < widthCenter) {
+    if (draggedX > clickedX) {
+      dist = draggedX - clickedX;
+      bgCircleSize += dist / 500;
+    } else if (draggedX < clickedX) {
+      dist = clickedX - draggedX;
+      bgCircleSize -= dist / 500;
+    }
+  }
 }
-function drawHangingBgCircle(angle) {
+
+function growCircle(angle) {
   ctx.clearRect(0, 0, width, height);
   ctx.beginPath();
   ctx.fillStyle = `${black}`;
   ctx.arc(width / 2, height / 2, bgCircleSize, 0, 2 * Math.PI);
   ctx.fill();
 
+  let first = true;
   bgCircleSize += grow;
+
   if (angle > -50) {
     grow = -grow;
   } else if (angle < -86) {
     grow = -grow;
+    first = false;
   }
+  // if (angle < -65 && first === false) {
+  //   console.log(first);
+  //   grow = -grow;
+  // }
 }
-
 function hangingthumb() {
-  const currentX = Math.cos(degree2Radian(angle)) * circleSize;
+  let currentX = Math.cos(degree2Radian(angle)) * circleSize;
   const currentY = Math.sin(degree2Radian(angle)) * circleSize;
+
+  let first = true;
+  angle += speed;
+
+  if (angle > -50) {
+    speed = -speed;
+  } else if (angle < -86) {
+    speed = -speed;
+  }
+  if (angle < -75) {
+    first === false;
+  }
+  if (angle < -77 && first === false) {
+    speed = -speed;
+  }
+  // console.log(first);
+
+  // if (angle < -65 && first === false) {
+  //   speed = -speed;
+  //   console.log(first); //두번째부터는 각도 작게 하기
+  // }
 
   drawHangingThumb(currentX, currentY);
   drawArrows(angle, currentX, currentY);
-
-  angle += speed;
-  if (angle > -50) {
-    speed = -speed;
-  } else if (angle < -86) {
-    speed = -speed;
-  }
 }
-
-function dragedHandler(e) {
+function draggedHandler(e) {
   // (원 기준으로 마우스가 있는 곳) 각도를 계산
-  const theta = Math.atan2(mouseClickedY - centerY, mouseClickedX - centerX);
-  const angle = theta * (180 / Math.PI);
-
+  const theta = Math.atan2(draggedY - centerY, draggedX - centerX);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawDraggedBgCircle(e);
+  growCircleDrag();
   marchDashedLine();
   drawStartPoint();
   drawPath(theta);
@@ -200,23 +262,24 @@ function dragedHandler(e) {
 }
 
 document.addEventListener("mousedown", (e) => {
-  mouseClickedX = e.clientX;
-  mouseClickedY = e.clientY;
   mousePressed = true;
   clearInterval(timeId);
-});
+  clickedX = e.clientX;
+  clickedY = e.clientY; //클릭 좌표를 받는다
 
-document.addEventListener("mousemove", (e) => {
-  if (mousePressed === true) {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    mouseClickedX = mouseX;
-    mouseClickedY = mouseY;
-    dragedHandler();
-  }
-});
-document.addEventListener("mouseup", (e) => {
-  if (mousePressed) {
-    mousePressed = false;
-  }
+  document.addEventListener("mousemove", (e) => {
+    if (mousePressed === true) {
+      //드래그된 마우스 위치를 받는다
+      draggedX = e.clientX; //let, const 붙이면    draggedY is not defined
+      draggedY = e.clientY;
+      growCircleDrag(clickedX, clickedY, draggedX, draggedY);
+
+      draggedHandler(draggedX, draggedY);
+    }
+  });
+  document.addEventListener("mouseup", (e) => {
+    if (mousePressed === true) {
+      mousePressed = false;
+    }
+  });
 });
